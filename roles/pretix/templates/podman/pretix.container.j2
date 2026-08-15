@@ -1,10 +1,10 @@
 [Unit]
 Description=Pretix Standalone Service
 
-Wants=podman-pretix-postgres.service
-Wants=podman-pretix-redis.service
-After=podman-pretix-postgres.service
-After=podman-pretix-redis.service
+Wants=pretix-postgres.service
+Wants=pretix-redis.service
+After=pretix-postgres.service
+After=pretix-redis.service
 
 [Container]
 Image=docker.io/pretix/standalone:stable

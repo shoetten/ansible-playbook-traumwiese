@@ -30,6 +30,8 @@
   ansible.builtin.template:
     src: "{{ item }}"
     dest: "/etc/containers/systemd/pretix/config/{{ item | basename | regex_replace('\\.j2$', '') }}"
+    owner: "15371"
+    group: "15371"
     mode: "0700"
   with_fileglob:
     - "templates/config/*"

@@ -4,6 +4,11 @@
     name: "podman"
     state: present
 
+- name: Install aardvark-dns
+  ansible.builtin.package:
+    name: "aardvark-dns"
+    state: present
+
 - name: Ensure Podman is enabled at boot
   ansible.builtin.service:
     name: podman
