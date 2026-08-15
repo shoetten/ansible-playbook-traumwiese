@@ -1,3 +1,7 @@
 ---
 - ansible.builtin.import_tasks: packages.yml
 - ansible.builtin.import_tasks: users.yml
+
+- name: Configure timezone
+  community.general.timezone:
+    name: Europe/Berlin

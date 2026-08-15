@@ -1,0 +1,10 @@
+[Unit]
+Description=Run pretix maintenance cron
+
+[Timer]
+OnCalendar=*:0/30
+Persistent=true
+RandomizedDelaySec=10
+
+[Install]
+WantedBy=timers.target

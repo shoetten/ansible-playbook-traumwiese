@@ -1,0 +1,23 @@
+[Unit]
+Description=Pretix Cron
+
+Wants=pretix-postgres.service
+After=pretix-postgres.service
+
+[Container]
+Image=docker.io/pretix/standalone:stable
+Pull=missing
+
+Volume=pretix-data.volume:/data
+Volume=./config:/etc/pretix
+
+Network=pretix.network
+
+Exec=cron
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target
