@@ -1,0 +1,24 @@
+---
+- name: Install default packages
+  ansible.builtin.apt:
+    name: caddy
+    state: present
+    update_cache: true
+  notify: Restart caddy
+
+- name: Add main Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    owner: "{{ caddy_user }}"
+    group: "{{ caddy_user }}"
+    mode: "0660"
+  notify: Restart caddy
+
+- name: Ensure vhosts dir exists
+  ansible.builtin.file:
+    path: "{{ caddy_vhosts_directory }}"
+    state: directory
+    mode: "0770"
+    owner: "{{ caddy_user }}"
+    group: "{{ caddy_user }}"

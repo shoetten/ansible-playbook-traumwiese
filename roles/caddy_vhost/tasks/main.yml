@@ -1,0 +1,9 @@
+---
+- name: Add Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ (caddy_vhosts_directory, caddy_vhost_name ~ '.caddy') | path_join }}"
+    owner: "{{ caddy_user }}"
+    group: "{{ caddy_user }}"
+    mode: "0660"
+  notify: "Reload caddy"

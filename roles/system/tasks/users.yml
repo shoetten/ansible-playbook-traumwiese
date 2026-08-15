@@ -1,0 +1,27 @@
+---
+- name: Add admin groups
+  ansible.builtin.group:
+    name: "{{ item.name }}"
+  with_items: "{{ system_admin_users }}"
+
+- name: Change root shell to zsh
+  ansible.builtin.user:
+    name: root
+    shell: /bin/zsh
+
+- name: Add admin users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    group: "{{ item.name }}"
+    groups:
+      - sudo
+    shell: /bin/zsh
+    password: "{{ item.password }}"
+  with_items: "{{ system_admin_users }}"
+
+# add admin ssh keys
+- name: Add admin ssh keys
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.key }}"
+  with_items: "{{ system_admin_users }}"

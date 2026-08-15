@@ -1,0 +1,13 @@
+---
+restic_backups: []
+restic_repos: {}
+restic_user: restic
+restic_dir_owner: "{{ restic_user }}"
+restic_dir_group: "{{ restic_user }}"
+restic_no_log: true
+restic_pid_dir: "/var/run/restic"
+restic_script_dir: "/opt/restic"
+
+# timer defaults
+restic_systemd_timer_randomizeddelaysec: "1h"
+restic_systemd_timer_default_oncalendar: "*-*-* 02:00:00"

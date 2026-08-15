@@ -1,0 +1,10 @@
+---
+dependencies:
+  - role: caddy_vhost
+    vars:
+      caddy_vhost_name: pretix
+      caddy_vhost_caddyfile: |
+        {{ pretix_domain }} {
+            reverse_proxy 127.0.0.1:{{ pretix_port }}
+        }
+    become: true

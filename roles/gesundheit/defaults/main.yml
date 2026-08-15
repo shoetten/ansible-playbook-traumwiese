@@ -1,0 +1,7 @@
+---
+gesundheit_modules: []
+gesundheit_timestamps: false
+gesundheit_http_enabled: false
+gesundheit_http_listen_ip: 127.0.0.1
+gesundheit_http_listen_port: 8080
+gesundheit_data_directory: /var/lib/gesundheit

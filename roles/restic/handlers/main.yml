@@ -1,0 +1,8 @@
+---
+- name: restart restic.timer
+  ansible.builtin.systemd:
+    name: "restic-{{ item.key | replace(' ', '') | string }}.timer"
+    state: "restarted"
+    daemon_reload: true
+    masked: false
+  loop: "{{ restic_backups | dict2items }}"

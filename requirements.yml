@@ -1,0 +1,6 @@
+roles:
+  - name: geerlingguy.security
+  - name: systemli.apt_repositories
+
+collections:
+  - name: community.general

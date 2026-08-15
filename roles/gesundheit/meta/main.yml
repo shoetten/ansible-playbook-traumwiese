@@ -1,0 +1,15 @@
+---
+dependencies:
+  - role: systemli.apt_repositories
+    vars:
+      apt_repositories:
+        - name: repo.honkgong.info-gesundheit
+          url: "https://repo.honkgong.info/gesundheit/deb"
+          suites: /
+          components: ''
+          key_path: gesundheit-release-key.gpg
+          packages:
+            - gesundheit
+    become: true
+collections:
+  - sivel.toiletwater

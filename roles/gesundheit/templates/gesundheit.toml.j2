@@ -1,0 +1,22 @@
+# {{ ansible_managed }}
+
+# Log to stdout without timestamps
+[Log]
+Path = "-"
+Timestamps = {{ gesundheit_timestamps | ternary('true', 'false') }}
+
+# Enable if you need a pretty web interface
+[Http]
+Enabled = {{ gesundheit_http_enabled | ternary('true', 'false') }}
+Listen = "{{ gesundheit_http_listen_ip }}:{{ gesundheit_http_listen_port }}"
+
+# Enable filesystem database
+[Database]
+Module = "filesystem"
+[Database.Config]
+Directory = "{{ gesundheit_data_directory }}"
+VacuumInterval = "24h"
+
+# Load modules config from modules.d
+[Modules]
+Config = "modules.d/*.toml"

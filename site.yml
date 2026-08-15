@@ -1,0 +1,26 @@
+- name: Provision ingressmaschine
+  hosts: all
+  become: true
+  roles:
+    - role: geerlingguy.security
+      security_ssh_port: 22
+      security_autoupdate_enabled: true
+      security_autoupdate_reboot: true
+      security_fail2ban_enabled: false
+      security_ssh_allowed_users: "{{ vault_admin_users | map(attribute='name') | list }}"
+      security_sudoers_passworded: "{{ vault_admin_users | map(attribute='name') | list }}"
+    - role: system
+      system_admin_users: "{{ vault_admin_users }}"
+    - role: podman
+      tags: [podman, docker]
+    - role: caddy
+      tags: [caddy, proxy]
+
+- name: Gesundheit
+  ansible.builtin.import_playbook: gesundheit.playbook.yml
+
+- name: Backup
+  ansible.builtin.import_playbook: backup.playbook.yml
+
+- name: Pretix
+  ansible.builtin.import_playbook: pretix.playbook.yml

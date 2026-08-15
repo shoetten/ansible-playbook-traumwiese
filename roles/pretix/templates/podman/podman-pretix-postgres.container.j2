@@ -1,0 +1,28 @@
+[Unit]
+Description=Postgres for pretix
+
+[Container]
+Image=docker.io/library/postgres:{{ ente_postgres_version }}
+AutoUpdate=registry
+
+Environment=POSTGRES_USER={{ vault_pretix_db_user }}
+Environment=POSTGRES_PASSWORD={{ vault_pretix_db_pass }}
+Environment=POSTGRES_DB={{ pretix_db_name }}
+
+Volume=pretix.postgres-data.volume:/var/lib/postgresql/data
+
+HealthCmd=pg_isready -q -d {{ pretix_db_name }} -U {{ vault_pretix_db_user }}
+HealthInterval=1s
+HealthTimeout=5s
+HealthRetries=20
+
+Network=pretix.network
+
+[Service]
+Restart=always
+# Extend Timeout to allow time to pull the image
+TimeoutStartSec=600
+
+[Install]
+# Start by default on boot
+WantedBy=multi-user.target default.target podman-pretix.service

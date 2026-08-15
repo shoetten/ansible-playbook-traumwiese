@@ -1,0 +1,26 @@
+---
+- name: Update repositories
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+# install packages
+- name: Install default packages
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - curl
+      - git-core
+      - htop
+      - logrotate
+      - ncdu # ncurses disk usage analyzer
+      - net-tools
+      - python3
+      - tldr-py
+      - tmux
+      - vim
+      - zsh
+      - zsh-autosuggestions
+      - zsh-syntax-highlighting

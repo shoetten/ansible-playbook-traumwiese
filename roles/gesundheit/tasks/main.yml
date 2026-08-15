@@ -1,0 +1,39 @@
+---
+- name: Install gesundheit
+  ansible.builtin.package:
+    name: gesundheit
+    state: present
+  notify: Restart gesundheit service
+
+- name: Enable gesundheit service
+  ansible.builtin.service:
+    name: gesundheit
+    enabled: true
+
+- name: Ensure data dir exists
+  ansible.builtin.file:
+    path: "{{ gesundheit_data_directory }}"
+    state: directory
+    mode: '0750'
+    owner: gesundheit
+    group: gesundheit
+
+- name: Configure gesundheit
+  ansible.builtin.template:
+    src: "gesundheit.toml.j2"
+    dest: "/etc/gesundheit/gesundheit.toml"
+    owner: root
+    group: gesundheit
+    mode: "0640"
+  notify: Restart gesundheit service
+
+- name: Configure gesundheit modules
+  ansible.builtin.template:
+    src: "module.toml.j2"
+    dest: "/etc/gesundheit/modules.d/{{ item.filename }}.toml"
+    owner: root
+    group: gesundheit
+    mode: "0640"
+  with_items: "{{ gesundheit_modules }}"
+  no_log: true
+  notify: Restart gesundheit service

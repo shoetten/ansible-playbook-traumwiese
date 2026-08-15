@@ -1,0 +1,9 @@
+# Global Options
+{
+  servers {
+    # enable http/2 and http/3 for all vhosts
+    protocols h1 h2 h3
+  }
+}
+
+import {{ (caddy_vhosts_directory, '*.caddy') | path_join }}

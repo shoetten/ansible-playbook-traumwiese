@@ -1,0 +1,12 @@
+---
+- name: Setup pretix
+  hosts: all
+  tags:
+    - pretix
+  become: true
+  roles:
+    - role: pretix
+      pretix_instance_name: "Traumwiese"
+      pretix_domain: anmeldung.traumwiese.org
+      pretix_mail_from: anmeldung@traumwiese.org
+      pretix_mail_host: mail.your-server.de

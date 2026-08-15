@@ -1,0 +1,15 @@
+backup/
+
+# Python venv
+venv/
+
+# Ansible
+*.retry
+*.local
+vault.yml
+vendor/
+__pycache__
+.ansible
+
+# VSCode
+.vscode

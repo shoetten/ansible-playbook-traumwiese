@@ -1,0 +1,46 @@
+[Unit]
+Description=Backup {{ item.key }} using restic
+
+[Service]
+Type=oneshot
+ExecStart={{ restic_script_dir }}/backup-{{ item.key }}.sh
+TimeoutStartSec=0
+User={{ restic_user }}
+StateDirectory="restic"
+
+Environment="CRON=true"
+Environment="RESTIC_REPOSITORY={{ restic_repos[item.value.repo].location }}:{{ item.key }}"
+# run systemd-ask-password -n | systemd-creds encrypt --name=restic-password -p - -
+# on the remote host, to encrypt the restic password via TPM (if available)
+SetCredentialEncrypted={{ restic_repos[item.value.repo].encrypted_password }}
+Environment="RESTIC_PASSWORD_FILE=%d/restic-password"
+
+# as recommend by https://wiki.archlinux.org/title/Restic#Scheduling
+
+{% if restic_user != 'root' %}
+AmbientCapabilities=CAP_DAC_READ_SEARCH   # allow non-root user to read everything
+CapabilityBoundingSet=CAP_DAC_READ_SEARCH
+{% endif %}
+DevicePolicy=closed
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+PrivateDevices=yes
+PrivateMounts=on
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectProc=invisible
+RemoveIPC=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+UMask=7007
+
+# the following cannot be enabled when accessing a podman container
+# NoNewPrivileges=yes
+# ProtectSystem=strict
+# RestrictNamespaces=yes
+# SystemCallFilter=@system-service

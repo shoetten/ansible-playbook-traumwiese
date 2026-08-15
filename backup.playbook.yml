@@ -1,0 +1,56 @@
+---
+- name: Setup restic backups
+  hosts: all
+  tags:
+    - setup
+    - backup
+    - restic
+  become: true
+  tasks:
+    - name: add python3-paramiko dependency for ssh ansible module
+      ansible.builtin.package:
+        name: python3-paramiko
+        state: present
+    - name: Ensure user ssh dir exists and is writeable
+      ansible.builtin.file:
+        path: "/home/restic/.ssh"
+        state: directory
+        owner: "restic"
+        group: "restic"
+        mode: "0750"
+    - name: copy ssh private key for storage box access
+      ansible.builtin.copy:
+        content: "{{ vault_restic_repository_location_ssh_private_key }}"
+        dest: /home/restic/.ssh/backup_key
+        owner: restic
+        group: restic
+        mode: "0600"
+    - name: Configure storage box host in the ssh configuration
+      community.general.ssh_config:
+        host: "{{ vault_restic_repository_location_host }}"
+        identity_file: "/home/restic/.ssh/backup_key"
+        user: restic
+        identities_only: true
+        port: "23"
+        strict_host_key_checking: "accept-new"
+        state: present
+  roles:
+    - role: restic
+      restic_no_log: false
+      restic_repos:
+        sftp:
+          location: "sftp:{{ vault_restic_repository_location_user }}@{{ vault_restic_repository_location_host }}"
+          encrypted_password: "{{ vault_restic_repository_encrypted_password }}"
+      restic_backups:
+        wg-portal-data:
+          repo: sftp
+          src: /var/lib/containers/storage/volumes/systemd-wg-portal.data
+          scheduled: true
+          schedule_oncalendar: "*-*-* 03:10:00"
+          exclude:
+            exclude_caches: true
+          monitoring_call: "date --utc --iso-8601=s > /var/lib/restic/restic-wg-portal-data.stamp"
+          # set keep-within to guard against an attacker overwriting all "good" snapshots in append only mode
+          # see https://restic.readthedocs.io/en/stable/060_forget.html#security-considerations-in-append-only-mode for details
+          keep_within: "1m"
+          keep_weekly: 8

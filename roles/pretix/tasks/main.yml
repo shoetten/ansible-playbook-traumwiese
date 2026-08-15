@@ -1,0 +1,36 @@
+---
+- name: Ensure podman config dir exists
+  ansible.builtin.file:
+    path: "/etc/containers/systemd/pretix"
+    state: directory
+    mode: "0750"
+
+- name: Add podman pretix config files
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/containers/systemd/pretix/{{ item }}"
+    mode: "0600"
+  with_fileglob:
+    - "templates/podman/*.j2"
+  notify: "Restart pretix"
+
+- name: Reload systemd units
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Ensure pretix config dir exists
+  ansible.builtin.file:
+    path: "/etc/containers/systemd/pretix/config"
+    state: directory
+    owner: "15371"
+    group: "15371"
+    mode: "0750"
+
+- name: Add pretix config files
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/containers/systemd/pretix/config/{{ item }}"
+    mode: "0700"
+  with_fileglob:
+    - "templates/config/*.j2"
+  notify: "Restart pretix"

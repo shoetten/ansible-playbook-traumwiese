@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+# {{ ansible_managed }}
+# Backup script for {{ item.value.src|default('stdin') }}
+# Use this file to create a Backup and prune existing data with one execution.
+
+pid="{{ restic_pid_dir }}/backup_{{  item.key | regex_replace('\'', '\'\\\'\'') }}.pid"
+trap "rm -f $pid" SIGSEGV
+trap "rm -f $pid" SIGINT
+
+if [ -e $pid ]; then
+  echo "Another version of this restic backup script is already running!"
+  exit # pid file exists, another instance is running, so now we politely exit
+else
+  echo $$ > $pid # pid file doesn't exit, create one and go on
+fi
+# your normal workflow here...
+
+{% if item.value.disable_logging is defined and item.value.disable_logging %}
+{% set pre_backup_cmd_result_log, pre_backup_cmd_output_log = "/dev/null", "/dev/null" %}
+{% set backup_result_log, backup_output_log = "/dev/null", "/dev/null" %}
+{% set forget_result_log, forget_output_log = "/dev/null", "/dev/null" %}
+{% set post_backup_cmd_result_log, post_backup_cmd_output_log = "/dev/null", "/dev/null" %}
+{% else %}
+{% set pre_backup_cmd_result_log, pre_backup_cmd_output_log = "| systemd-cat -t " + item.key, "2>&1 | systemd-cat -t " + item.key %}
+{% set backup_result_log, backup_output_log = "| systemd-cat -t " + item.key, "2>&1 | systemd-cat -t " + item.key %}
+{% set forget_result_log, forget_output_log = "| systemd-cat -t " + item.key, "2>&1 | systemd-cat -t " + item.key %}
+{% set post_backup_cmd_result_log, post_backup_cmd_output_log = "| systemd-cat -t " + item.key, "2>&1 | systemd-cat -t " + item.key %}
+{% endif %}
+
+BACKUP_NAME={{ item.key }}
+{% if item.value.src is defined  and item.value.src is string %}
+BACKUP_SOURCE={{ item.value.src }}
+{% elif item.value.src is defined and item.value.src is sequence %}
+BACKUP_SOURCE='{{ item.value.src| join(' ') }}'
+{% endif %}
+
+set -uo pipefail
+{#
+  Define Tags
+#}
+{% macro tags(tags) -%}
+  {% if tags is defined and (tags|length>0) %}{% for tag in tags %} --tag {{ tag }}{% endfor %}{% endif %}
+{%- endmacro %}
+{#
+  Define Keeped Tags
+#}
+{% macro keep_tags(tags) -%}
+  {% if tags is defined and (tags|length>0) %}{% for tag in tags %} --keep-tag {{ tag }}{% endfor %}{% endif %}
+{%- endmacro %}
+{#
+  Define Hostname
+#}
+{% macro hostname(h) -%}
+  {% if h is defined %} --hostname {{ h }}{% endif %}
+{%- endmacro %}
+{#
+  Define stdin filename
+#}
+{% macro stdin_filename(n) -%}
+  {% if n is defined %} --stdin-filename {{ n }}{% endif %}
+{%- endmacro %}
+{#
+  Define paths
+#}
+{% macro paths(repo) -%}
+{% if repo.src is defined and repo.src != None and (repo.src is not string)  %}{%for path in repo.src %} --path {{ path }}{% endfor %}{%elif repo.src is string %}--path {{repo.src}} {% else %} --path {{ repo.stdin_filename }}{% endif %}
+{%- endmacro %}
+{#
+  Define retention pattern
+#}
+{% macro retention_pattern(repo) -%}
+  {% if repo.keep_last is defined and repo.keep_last != None %}--keep-last {{ item.value.keep_last }}{% endif %} \
+  {% if repo.keep_hourly is defined and repo.keep_hourly != None %}--keep-hourly {{ item.value.keep_hourly }}{% endif %} \
+  {% if repo.keep_daily is defined and repo.keep_daily != None %}--keep-daily {{ item.value.keep_daily }}{% endif %} \
+  {% if repo.keep_weekly is defined and repo.keep_weekly != None %}--keep-weekly {{ item.value.keep_weekly }}{% endif %} \
+  {% if repo.keep_monthly is defined and repo.keep_monthly != None %}--keep-monthly {{ item.value.keep_monthly }}{% endif %} \
+  {% if repo.keep_yearly is defined and repo.keep_yearly != None %}--keep-yearly {{ item.value.keep_yearly }}{% endif %} \
+  {% if repo.keep_within is defined and repo.keep_within != None %}--keep-within {{ item.value.keep_within }}{% endif %} \
+  {% if repo.keep_tag is defined and (repo.keep_tag|length>0) %}{{ keep_tags(repo.keep_tag) }}{% endif %}
+{%- endmacro %}
+
+{% macro exclude(exclude) %}
+    {% if exclude.exclude_caches is defined and exclude.exclude_caches == true %}
+        --exclude-caches \
+    {% endif %}
+    {% if exclude.exclude is defined %}
+        {% for path in exclude.exclude %}
+            --exclude {{ path }} \
+        {% endfor %}
+    {% endif %}
+    {% if exclude.iexclude is defined %}
+        {% for path in exclude.iexclude %}
+            --iexclude {{ path }} \
+        {% endfor %}
+    {% endif %}
+    {% if exclude.exclude_file is defined %}
+        {% for path in exclude.exclude_file %}
+            --exclude-file {{ path }} \
+        {% endfor %}
+    {% endif %}
+    {% if exclude.exclude_if_present is defined %}
+        {% for path in exclude.exclude_if_present %}
+            --exclude-if-present {{ path }} \
+        {% endfor %}
+    {% endif %}
+{% endmacro %}
+
+{% if item.value.pre_backup_cmd is defined %}
+  {{ item.value.pre_backup_cmd }} {{ pre_backup_cmd_output_log }}
+if [[ $? -eq 0 ]]
+then
+    echo "$(date -u '+%Y-%m-%d %H:%M:%S') OK" {{ pre_backup_cmd_result_log }}
+else
+    echo "$(date -u '+%Y-%m-%d %H:%M:%S') ERROR" {{ pre_backup_cmd_result_log }}
+fi
+{% endif %}
+
+{#
+  Define backup commands
+#}
+if [[ -z ${CRON+x} ]]; then
+  MODE_TAG="--tag manual"
+else
+  MODE_TAG="--tag cron"
+fi
+
+{% if item.value.stdin is defined and item.value.stdin == true %}
+  {{ item.value.stdin_cmd }} | restic backup \
+    --stdin $MODE_TAG \
+    {{ tags(item.value.tags) }} \
+    {{ stdin_filename(item.value.stdin_filename) }} \
+    {% if item.value.exclude is defined %}{{ exclude(item.value.exclude) }}{% endif %} \
+    $@ \
+{% else %}
+{
+  restic backup $BACKUP_SOURCE $MODE_TAG \
+    {{ tags(item.value.tags) }} \
+    {% if item.value.exclude is defined %}{{ exclude(item.value.exclude) }}{% endif %} \
+    $@
+} \
+{% endif %} {{ backup_output_log }}
+
+BACKUP_EXIT_CODE=$?
+case $BACKUP_EXIT_CODE in
+    0)
+        echo "$(date -u '+%Y-%m-%d %H:%M:%S') OK" {{ backup_result_log }}
+        ;;
+    3)
+        echo "$(date -u '+%Y-%m-%d %H:%M:%S') WARNING" {{ backup_result_log }}
+        ;;
+    *)
+        echo "$(date -u '+%Y-%m-%d %H:%M:%S') ERROR" {{ backup_result_log }}
+esac
+
+{#
+  Define stdin forget commands
+#}
+restic forget {{ paths(item.value) }} {{ retention_pattern(item.value) }} {% if item.value.prune is defined and item.value.prune == true %}--prune{% endif %} {% if item.value.forget_extra_args is defined %}{{ item.value.forget_extra_args }}{% endif %} {{ forget_output_log }}
+if [[ $? -eq 0 ]]
+then
+    echo "$(date -u '+%Y-%m-%d %H:%M:%S') OK" {{ forget_result_log }}
+    {% if item.value.monitoring_call is defined %}
+    # Only call monitoring if backup also succeeded (exit code 0 or 3)
+    if [[ $BACKUP_EXIT_CODE -eq 0 ]]; then
+        {{ item.value.monitoring_call }}
+    fi
+    {% endif %}
+else
+    echo "$(date -u '+%Y-%m-%d %H:%M:%S') ERROR" {{ forget_result_log }}
+fi
+
+{% if item.value.post_backup_cmd is defined %}
+  {{ item.value.post_backup_cmd }} {{ post_backup_cmd_output_log }}
+{% endif %}
+{% if item.value.post_backup_cmd is defined %}
+if [[ $? -eq 0 ]]
+then
+    echo "$(date -u '+%Y-%m-%d %H:%M:%S') OK" {{ post_backup_cmd_result_log }}
+else
+    echo "$(date -u '+%Y-%m-%d %H:%M:%S') ERROR" {{ post_backup_cmd_result_log }}
+fi
+{% endif %}
+
+rm -f $pid # remove pid file just before exiting
+exit $BACKUP_EXIT_CODE

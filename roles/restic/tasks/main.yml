@@ -1,0 +1,89 @@
+---
+- name: Install restic
+  ansible.builtin.package:
+    name: "restic"
+    state: present
+
+- name: Create restic user
+  ansible.builtin.user:
+    name: "{{ restic_user }}"
+    shell: "/sbin/nologin"
+    system: false
+  when:
+    - restic_user != 'root'
+
+- name: Ensure cache dir exists and is writeable
+  ansible.builtin.file:
+    path: "~/.cache/restic"
+    state: directory
+    owner: "{{ restic_user }}"
+    group: "{{ restic_user }}"
+    mode: "0750"
+
+- name: Ensure pid folder exists and is writeable
+  ansible.builtin.file:
+    path: "{{ restic_pid_dir }}"
+    state: directory
+    owner: "{{ restic_user }}"
+    group: "{{ restic_user }}"
+    mode: "0755"
+
+- name: Ensure restic script dir exists
+  ansible.builtin.file:
+    path: "{{ restic_script_dir }}"
+    state: directory
+    mode: "0700"
+    owner: "{{ restic_dir_owner }}"
+    group: "{{ restic_dir_group }}"
+
+- name: Create backup scripts
+  ansible.builtin.template:
+    src: restic_backup.sh.j2
+    dest: "{{ restic_script_dir }}/backup-{{ item.key | replace(' ', '') }}.sh"
+    mode: "0700"
+    owner: "{{ restic_dir_owner }}"
+    group: "{{ restic_dir_group }}"
+  no_log: "{{ restic_no_log }}"
+  loop: "{{ restic_backups | dict2items }}"
+  when:
+    - item.value.repo in restic_repos
+
+- name: Copy systemd timer
+  ansible.builtin.template:
+    src: restic.timer.j2
+    dest: "/lib/systemd/system/restic-{{ item.key | replace(' ', '') }}.timer"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  no_log: "{{ restic_no_log }}"
+  loop: "{{ restic_backups | dict2items }}"
+  notify: restart restic.timer
+
+- name: Copy systemd service
+  ansible.builtin.template:
+    src: restic.service.j2
+    dest: "/lib/systemd/system/restic-{{ item.key | replace(' ', '') }}.service"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  no_log: "{{ restic_no_log }}"
+  loop: "{{ restic_backups | dict2items }}"
+
+- name: Enable restic service
+  ansible.builtin.systemd:
+    name: "restic-{{ item.key | replace(' ', '') | string }}.service"
+    enabled: true
+    daemon_reload: true
+    masked: false
+  loop: "{{ restic_backups | dict2items }}"
+  notify: restart restic.timer
+
+- name: Enable and start restic timer
+  ansible.builtin.systemd:
+    name: "restic-{{ item.key | replace(' ', '') | string }}.timer"
+    enabled: true
+    state: started
+    daemon_reload: true
+    masked: false
+  loop: "{{ restic_backups | dict2items }}"
+  notify: restart restic.timer

@@ -1,0 +1,17 @@
+[Unit]
+Description=redis for pretix
+
+[Container]
+Image=docker.io/library/redis:{{ pretix_redis_version }}
+AutoUpdate=registry
+
+Network=pretix.network
+
+[Service]
+Restart=always
+# Extend Timeout to allow time to pull the image
+TimeoutStartSec=600
+
+[Install]
+# Start by default on boot
+WantedBy=multi-user.target default.target podman-pretix.service

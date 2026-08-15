@@ -1,0 +1,29 @@
+[Unit]
+Description=Pretix Standalone Service
+
+Wants=podman-pretix-postgres.service
+Wants=podman-pretix-redis.service
+After=podman-pretix-postgres.service
+After=podman-pretix-redis.service
+
+[Container]
+Image=docker.io/pretix/standalone:stable
+AutoUpdate=registry
+
+Volume=pretix.data.volume:/data
+Volume=./config:/etc/pretix
+
+PublishPort={{ pretix_bind_ip }}:{{ pretix_port }}:80
+Network=pretix.network
+
+Exec=all
+PodmanArgs=--sysctl=net.core.somaxconn=4096
+
+[Service]
+Restart=always
+# Extend Timeout to allow time to pull the image
+TimeoutStartSec=600
+
+[Install]
+# Start by default on boot
+WantedBy=multi-user.target default.target

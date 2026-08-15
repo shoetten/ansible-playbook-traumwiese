@@ -1,0 +1,6 @@
+---
+- name: Restart gesundheit service
+  ansible.builtin.service:
+    name: gesundheit
+    state: restarted
+    enabled: true

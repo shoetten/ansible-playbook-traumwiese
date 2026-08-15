@@ -1,0 +1,24 @@
+---
+pretix_instance_name: "Pretix"
+pretix_domain: "pretix.example.org"
+pretix_currency: "EUR"
+
+pretix_bind_ip: "127.0.0.1"
+pretix_port: 8080
+
+pretix_db_host: systemd-podman-pretix-postgres
+pretix_db_port: 5432
+pretix_db_name: pretix
+
+pretix_redis_host: systemd-podman-pretix-redis
+
+pretix_mail_from: hello@localhost
+pretix_mail_host: 127.0.0.71
+pretix_mail_user: "{{ vault_pretix_mail_user }}"
+pretix_mail_password: "{{ vault_pretix_mail_password }}"
+pretix_mail_port: 465
+pretix_mail_tls: off
+pretix_mail_ssl: on
+
+pretix_postgres_version: 16
+pretix_redis_version: 8
