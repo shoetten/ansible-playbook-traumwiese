@@ -2,3 +2,6 @@
 # ports
 gesundheit_http_listen_port: 9876
 pretix_port: 8080
+
+# pretix
+pretix_domain: anmeldung.traumwiese.org

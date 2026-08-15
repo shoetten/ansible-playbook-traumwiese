@@ -20,45 +20,15 @@
                 Token: "{{ vault_gesundheit_gotify.token }}"
               Filter:
                 - Module: "result-change"
-        # push gesundheit data through vpn to local network
-        - filename: handle-remote-backupmaschine
-          config:
-            Handler:
-              Module: "remote"
-              Config:
-                Address: "10.88.42.12:9999"
-                # pubkey is 7n/uq3G/vFojytMenj1cjrfNZIFbjUFtSVPJOJjA+Ro=
-                PrivateKey: "{{ vault_gesundheit_node_private_key }}"
-                PublicKey: "sDK9d9BYmf+O1ZFiavOBWXbuhhzZZ0eVt5yTM6PeVEs=" # pubkey of backupmaschine
-        - filename: input-remote
-          config:
-            Input:
-              Module: "remote"
-              Config:
-                Listen: ":9999"
-                # pubkey is 7n/uq3G/vFojytMenj1cjrfNZIFbjUFtSVPJOJjA+Ro=
-                PrivateKey: "{{ vault_gesundheit_node_private_key }}"
-                Peers:
-                  - PublicKey: "vLL+QKR+RKtnbAe+A+YfYOP45hSR+JTqkdK3pl2R1Gk=" # mediamaschine
-        - filename: check-mediamaschine-alive
-          config:
-            Check:
-              Module: "node-alive"
-              Description: "Check if mediamaschine is alive"
-              Interval: "1m"
-              Config:
-                Node: "mediamaschine" # node name is hostname by default
-                MaxAbsenceTime: "5m"
-
         - filename: check-disk-space-root
           config:
             Check:
               Module: "disk-space"
-              Description: "Check free space on root partition"
+              Description: "free space on root partition"
               Interval: "30m"
               Config:
                 MountPoint: "/"
-                MinAvailable: "1G"
+                MinAvailable: "4G"
         - filename: check-heartbeat
           config:
             Check:
@@ -69,7 +39,7 @@
           config:
             Check:
               Module: "memory"
-              Description: "Check available memory"
+              Description: "available memory"
               Interval: "5m"
               Config:
                 MinAvailable: "500M"
@@ -77,17 +47,37 @@
           config:
             Check:
               Module: "file-presence"
-              Description: "Check if reboot is required"
+              Description: "reboot is required"
               Interval: "1h"
               Config:
                 Path: "/run/reboot-required"
                 Present: false
-        - filename: check-restic-wg-portal-data-health
+        - filename: check-restic-pretix-data-health
           config:
             Check:
               Module: "file-mtime"
-              Description: "Check restic backup health of wg-portal data"
+              Description: "restic backup health of pretix data"
               Interval: "1h"
               Config:
-                Path: "/var/lib/restic/restic-wg-portal-data.stamp"
+                Path: "/var/lib/restic/restic-pretix-data.stamp"
                 MaxAge: "26h"
+        - filename: check-pretix-health
+          config:
+            Check:
+              Module: "http-status"
+              Description: "pretix health"
+              Interval: "5m"
+              Config:
+                Method: "GET"
+                Url: "https://{{ pretix_domain }}/healthcheck/"
+                Status: 200
+        - filename: check-pretix-ssl-cert
+          config:
+            Check:
+              Module: "tls-cert"
+              Description: "pretix ssl cert"
+              Interval: "1h"
+              Config:
+                Host: "{{ pretix_domain }}"
+                Port: 443
+                MinTTL: "24h"
