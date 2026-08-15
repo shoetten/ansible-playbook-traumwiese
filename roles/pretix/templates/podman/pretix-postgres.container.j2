@@ -2,14 +2,14 @@
 Description=Postgres for pretix
 
 [Container]
-Image=docker.io/library/postgres:{{ ente_postgres_version }}
+Image=docker.io/library/postgres:{{ pretix_postgres_version }}
 AutoUpdate=registry
 
 Environment=POSTGRES_USER={{ vault_pretix_db_user }}
 Environment=POSTGRES_PASSWORD={{ vault_pretix_db_pass }}
 Environment=POSTGRES_DB={{ pretix_db_name }}
 
-Volume=pretix.postgres-data.volume:/var/lib/postgresql/data
+Volume=pretix-postgres-data.volume:/var/lib/postgresql/data
 
 HealthCmd=pg_isready -q -d {{ pretix_db_name }} -U {{ vault_pretix_db_user }}
 HealthInterval=1s

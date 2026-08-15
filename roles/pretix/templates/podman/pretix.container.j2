@@ -10,7 +10,7 @@ After=podman-pretix-redis.service
 Image=docker.io/pretix/standalone:stable
 AutoUpdate=registry
 
-Volume=pretix.data.volume:/data
+Volume=pretix-data.volume:/data
 Volume=./config:/etc/pretix
 
 PublishPort={{ pretix_bind_ip }}:{{ pretix_port }}:80

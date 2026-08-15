@@ -7,11 +7,11 @@
 
 - name: Add podman pretix config files
   ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "/etc/containers/systemd/pretix/{{ item }}"
-    mode: "0600"
+    src: "{{ item }}"
+    dest: "/etc/containers/systemd/pretix/{{ item | basename | regex_replace('\\.j2$', '') }}"
+    mode: "0640"
   with_fileglob:
-    - "templates/podman/*.j2"
+    - "templates/podman/*"
   notify: "Restart pretix"
 
 - name: Reload systemd units
@@ -28,9 +28,9 @@
 
 - name: Add pretix config files
   ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "/etc/containers/systemd/pretix/config/{{ item }}"
+    src: "{{ item }}"
+    dest: "/etc/containers/systemd/pretix/config/{{ item | basename | regex_replace('\\.j2$', '') }}"
     mode: "0700"
   with_fileglob:
-    - "templates/config/*.j2"
+    - "templates/config/*"
   notify: "Restart pretix"

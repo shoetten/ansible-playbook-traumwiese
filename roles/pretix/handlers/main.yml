@@ -1,5 +1,5 @@
 ---
 - name: "Restart pretix"
   ansible.builtin.systemd_service:
-    name: podman-pretix.service
+    name: pretix.service
     state: restarted
