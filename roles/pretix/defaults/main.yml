@@ -16,9 +16,9 @@ pretix_mail_from: hello@localhost
 pretix_mail_host: 127.0.0.71
 pretix_mail_user: "{{ vault_pretix_mail_user }}"
 pretix_mail_password: "{{ vault_pretix_mail_password }}"
-pretix_mail_port: 465
-pretix_mail_tls: "off"
-pretix_mail_ssl: "on"
+pretix_mail_port: 587
+pretix_mail_tls: "on"
+pretix_mail_ssl: "off"
 
 pretix_postgres_version: 16
 pretix_redis_version: 8
