@@ -1,0 +1,98 @@
+# ==========================================
+# 1. Shell History & Environment
+# ==========================================
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE=~/.zsh_history
+
+# Options
+setopt histignorealldups sharehistory autocd extendedglob numericglobsort
+
+# ==========================================
+# 2. Keybindings (Emacs Mode)
+# ==========================================
+bindkey -e
+bindkey '^[[1;3D' backward-word
+bindkey '^[[1;3C' forward-word
+
+# Interactive history search with Up and Down arrows
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+[[ -n "${terminfo[kcuu1]}" ]] && bindkey "${terminfo[kcuu1]}" up-line-or-beginning-search
+[[ -n "${terminfo[kcud1]}" ]] && bindkey "${terminfo[kcud1]}" down-line-or-beginning-search
+
+# ==========================================
+# 3. Dynamic Prompt (Root Protection)
+# ==========================================
+# Automatically colors the username red if you use 'sudo -i' or log in as root
+if [[ $UID -eq 0 ]]; then
+  PROMPT='%F{red}%n%f@%m:%F{cyan}%25<...<%~%<<%f% # '
+else
+  PROMPT='%F{green}%n%f@%m:%F{cyan}%25<...<%~%<<%f% # '
+fi
+
+# ==========================================
+# 4. Modern Completion System
+# ==========================================
+# Secure and fast compinit initialization
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.m-1) ]]; then
+  compinit -C
+else
+  compinit -i
+fi
+
+# Completion Styles
+zstyle ':completion:*' auto-description 'specify: %d'
+zstyle ':completion:*' completer _expand _complete _correct _approximate
+zstyle ':completion:*' format 'Completing %d'
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' menu select=long
+zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
+zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
+zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
+zstyle ':completion:*' use-compctl false
+zstyle ':completion:*' verbose true
+
+# Color support for completions
+if type dircolors >/dev/null 2>&1; then
+  eval "$(dircolors -b)"
+  zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+fi
+
+# Process kill completion styling
+zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
+zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+
+# ==========================================
+# 5. Aliases
+# ==========================================
+alias l='ls -lFh'          # Long format, show type, human readable
+alias la='ls -lAFh'        # Long format, show almost all, show type, human readable
+alias ll='ls -l'           # Long format
+
+
+# ==========================================
+# 6. Source user defined additions
+# ==========================================
+for file in ~/.zsh/*(N); do source "$file"; done
+
+
+# ==========================================
+# 7. External Tools & Plugins
+# ==========================================
+# FZF Integration
+if type fzf >/dev/null 2>&1; then
+  source <(fzf --zsh)
+fi
+
+# Autosuggestions (Must load before syntax highlighting)
+if [[ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+  source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+fi
+
+# Syntax Highlighting (Must be loaded LAST)
+if [[ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+  source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi

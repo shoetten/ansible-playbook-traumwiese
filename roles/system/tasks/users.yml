@@ -25,3 +25,16 @@
     user: "{{ item.name }}"
     key: "{{ item.key }}"
   with_items: "{{ system_admin_users }}"
+
+- name: Add zsh config to root user
+  ansible.builtin.template:
+    src: "zshrc.j2"
+    dest: "/root/.zshrc"
+    mode: "0640"
+
+- name: Add zsh config to all admin users
+  ansible.builtin.template:
+    src: "zshrc.j2"
+    dest: "/home/{{ item.name }}/.zshrc"
+    mode: "0640"
+  with_items: "{{ system_admin_users }}"
