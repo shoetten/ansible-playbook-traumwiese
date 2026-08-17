@@ -61,6 +61,15 @@
               Config:
                 Path: "/var/lib/restic/restic-pretix-data.stamp"
                 MaxAge: "26h"
+        - filename: check-restic-pretix-database-health
+          config:
+            Check:
+              Module: "file-mtime"
+              Description: "restic backup health of pretix database"
+              Interval: "1h"
+              Config:
+                Path: "/var/lib/restic/restic-pretix-database.stamp"
+                MaxAge: "26h"
         - filename: check-pretix-health
           config:
             Check:

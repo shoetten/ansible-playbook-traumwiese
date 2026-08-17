@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # {{ ansible_managed }}
-# Backup script for {{ item.value.src|default('stdin') }}
+# Backup script for {{ item.key }}
 # Use this file to create a Backup and prune existing data with one execution.
 
 pid="{{ restic_pid_dir }}/backup_{{  item.key | regex_replace('\'', '\'\\\'\'') }}.pid"
@@ -28,10 +28,10 @@ fi
 {% endif %}
 
 BACKUP_NAME={{ item.key }}
-{% if item.value.src is defined  and item.value.src is string %}
-BACKUP_SOURCE={{ item.value.src }}
-{% elif item.value.src is defined and item.value.src is sequence %}
-BACKUP_SOURCE='{{ item.value.src| join(' ') }}'
+{% if item.value.get('src') is string %}
+BACKUP_SOURCE={{ item.value.get('src') }}
+{% elif item.value.get('src') is sequence %}
+BACKUP_SOURCE='{{ item.value.get('src') | join(' ') }}'
 {% endif %}
 
 set -uo pipefail
@@ -63,7 +63,7 @@ set -uo pipefail
   Define paths
 #}
 {% macro paths(repo) -%}
-{% if repo.src is defined and repo.src != None and (repo.src is not string)  %}{%for path in repo.src %} --path {{ path }}{% endfor %}{%elif repo.src is string %}--path {{repo.src}} {% else %} --path {{ repo.stdin_filename }}{% endif %}
+{% if repo.get('src') is defined and repo.get('src') != None and (repo.get('src') is not string)  %}{%for path in repo.get('src') %} --path {{ path }}{% endfor %}{%elif repo.get('src') is string %}--path {{ repo.get('src') }} {% else %} --path {{ repo.stdin_filename }}{% endif %}
 {%- endmacro %}
 {#
   Define retention pattern
