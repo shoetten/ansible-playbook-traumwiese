@@ -12,6 +12,7 @@
   vars:
     packages:
       - curl
+      - bind9-dnsutils
       - git-core
       - htop
       - logrotate
