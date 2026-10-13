@@ -20,6 +20,15 @@
                 Token: "{{ vault_gesundheit_gotify.token }}"
               Filter:
                 - Module: "result-change"
+        - filename: handle-remote-ingressmaschine
+          config:
+            Handler:
+              Module: "remote"
+              Config:
+                Address: "ingressmaschine.merse88b.de:9999"
+                # pubkey is XpJdiqy4eRMX2/wGXIJhnD3zrZKEBUynlww4gbUhnB0=
+                PrivateKey: "{{ vault_gesundheit_node_private_key }}"
+                PublicKey: "7n/uq3G/vFojytMenj1cjrfNZIFbjUFtSVPJOJjA+Ro=" # pubkey of ingressmaschine
         - filename: check-disk-space-root
           config:
             Check:
