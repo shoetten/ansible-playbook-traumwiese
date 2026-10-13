@@ -36,5 +36,7 @@
   ansible.builtin.template:
     src: "zshrc.j2"
     dest: "/home/{{ item.name }}/.zshrc"
+    user: "{{ item.name }}"
+    group: "{{ item.name }}"
     mode: "0640"
   with_items: "{{ system_admin_users }}"
